@@ -79,7 +79,10 @@ class RealMatrix:
         mult1_re = self.__mult1(in_real,x_real, memory_order, polynomial_order)
         coef_re = self.__coef_real(coefs)
         mult2_re = mult1_re@coef_re
-        out_mat_re = mult2_re[:,0]+(mult2_re[:,1]*1j)   
+        out_mat_re = mult2_re[:,0]+(mult2_re[:,1]*1j)
+        out_mat_re = out_mat_re.reshape(len(out_mat_re),1)
+        
+        
     
     def __in_abs_real(self, in_val, P):
         res = np.zeros((len(in_val),P))
