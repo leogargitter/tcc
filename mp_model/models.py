@@ -60,9 +60,81 @@ class ComplexMatrix:
         return validation_x_matrix@coefficients
 
 
+
+
 class RealMatrix:
-    def __init__(self):
-        pass
+    def __init__(self, parameters: ModelParameters, data: SystemData, coefs):
+        
+        polynomial_order = parameters.get_polynomial_order()
+        memory_order = parameters.get_memory_order()
+        
+        in_extraction = data.get_in_extraction()
+        out_extraction = data.get_out_extraction()
+        in_validation = data.get_in_validation()
+        out_validation = data.get_out_validation()
+        
+        in_real = self.__in_abs_real(in_validation, polynomial_order)
+        x_real = self.__x_mp_real(in_validation, memory_order)
+
+        mult1_re = self.__mult1(in_real,x_real, memory_order, polynomial_order)
+        coef_re = self.__coef_real(coefs)
+        mult2_re = mult1_re@coef_re
+        out_mat_re = mult2_re[:,0]+(mult2_re[:,1]*1j)   
+    
+    def __in_abs_real(self, in_val, P):
+        res = np.zeros((len(in_val),P))
+        for c in range(1,P+1,1):
+            for r in range(len(in_val)):
+                res[r,c-1] = (np.abs(in_val[r]))**(c-1)
+        return res
+
+
+    def __x_mp_real(self, in_val, M):
+        res0 = np.zeros((len(in_val),M+1),dtype=complex)
+        for c in range(M+1):
+            for r in range(len(in_val)-c):
+                res0[r+c,c] = in_val[r,0]
+
+        res = np.zeros((len(in_val),2*(M+1)))   
+        c2=0   
+        for c in range(0,2*(M+1),2):
+                res[:,c] = np.real(res0[:,c2])
+                res[:,c+1] = np.imag(res0[:,c2])
+                c2+=1
+        return res
+    
+    def __mult1(self, in_real, x_real, M, P):
+        res = np.zeros((len(in_real),2*P*(M+1)))
+        zero = np.zeros((1,in_real.shape[1]))
+        c=-2
+        for c1 in range(0,2*(M+1),2):
+            if c1 != 0:
+                in_real = np.append(zero,in_real,axis=0)
+                in_real = in_real[0:in_real.shape[0]-1,:]
+            for c2 in range(P):
+                c+=2
+                res[:,c] = x_real[:,c1]*in_real[:,c2] 
+                res[:,c+1] = x_real[:,c1+1]*in_real[:,c2]
+        res = res[0:len(res)-M,:]
+        return res
+
+
+    def __coef_real(self, coef):
+        res0 = np.zeros((len(coef),2))
+        for r in range(len(coef)):
+            res0[r,0] = np.real(coef[r])
+            res0[r,1] = np.imag(coef[r])
+        res = np.zeros((2*len(coef),2))
+        r2=0
+        for r in range(len(res0)):
+            res[r2,0]=res0[r,0]
+            res[r2,1]=res0[r,1]
+            res[r2+1,0]=-res0[r,1]
+            res[r2+1,1]=res0[r,0]
+            r2+=2
+        return res
+
+
 
 
 class LUT:
