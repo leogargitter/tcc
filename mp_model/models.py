@@ -63,7 +63,7 @@ class ComplexMatrix:
 
 
 class RealMatrix:
-    def __init__(self, parameters: ModelParameters, data: SystemData, coefs):
+    def __init__(self, parameters: ModelParameters, data: SystemData):
         
         polynomial_order = parameters.get_polynomial_order()
         memory_order = parameters.get_memory_order()
@@ -76,11 +76,20 @@ class RealMatrix:
         in_real = self.__in_abs_real(in_validation, polynomial_order)
         x_real = self.__x_mp_real(in_validation, memory_order)
 
+        
+        # Values that are calculated in the same way as previous models, they will be changed after validation that the previous iteration of this model is working as a class.
+        x_matrix = self.__calculate_x_matrix(in_extraction, memory_order, polynomial_order)
+        coefs = self.__calculate_coefficients(out_extraction, x_matrix, memory_order)
+        
+        
         mult1_re = self.__mult1(in_real,x_real, memory_order, polynomial_order)
         coef_re = self.__coef_real(coefs)
         mult2_re = mult1_re@coef_re
         out_mat_re = mult2_re[:,0]+(mult2_re[:,1]*1j)
         out_mat_re = out_mat_re.reshape(len(out_mat_re),1)
+        out_val_re = out_validation[0:len(out_validation)-memory_order,:]
+
+        self.nmse = NMSE(out_mat_re, out_val_re).get_nmse()
         
         
     
@@ -137,8 +146,25 @@ class RealMatrix:
             r2+=2
         return res
 
+    def __calculate_coefficients(self, out_extraction, extraction_x_matrix, memory_order):
+        extraction_x_matrix = extraction_x_matrix[memory_order+3:len(
+            extraction_x_matrix)-(memory_order+3), :]
+        out_extraction = out_extraction[memory_order +
+                                        3:len(out_extraction)-(memory_order+3), :]
+        coefficients = np.linalg.lstsq(
+            extraction_x_matrix, out_extraction, rcond=-1)
+        return coefficients[0]
 
-
+    def __calculate_x_matrix(self, mat_in, memory_order, polynomial_order):
+        x_matrix = np.zeros(
+            (len(mat_in), polynomial_order*(memory_order+1)), dtype=complex)
+        for row in range(memory_order+1, len(mat_in)):
+            for mem in range(memory_order+1):
+                for pol in range(1, polynomial_order+1):
+                    col = ((mem*polynomial_order)-1)+pol
+                    x_matrix[row, col] = mat_in[row-mem, 0] * \
+                        ((np.absolute(mat_in)[row-mem, 0])**(pol-1))
+        return x_matrix
 
 class LUT:
     def __init__(self, parameters: ModelParameters, data: SystemData):
