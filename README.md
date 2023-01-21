@@ -6,6 +6,7 @@ Arquivos de desenvolvimento do meu TCC.
 # TODO
 ---
 - [x] Objeto RealMatrix funcional
+- [x] Otimização de desempenho para o cálculo dos coeficientes de matrizes complexas e para o cálculo da matriz X
 - [ ] Padronização dos nomes dos componentes do modelo
 - [ ] Melhorar estrutura dos modelos:
   - [ ] Usar design pattern "strategy"
