@@ -35,6 +35,9 @@ class ComplexMatrix(CalculationStrategy):
         nmse = NMSE(output, data.out_validation[model_parameters.memory_order+3:len(
             data.out_validation)-(model_parameters.memory_order+3), :]).get_nmse()
 
+        self.original_in_validation = data.in_validation[model_parameters.memory_order+3:len(data.out_validation)-(model_parameters.memory_order+3), :]
+        self.original_out_validation = data.out_validation[model_parameters.memory_order+3:len(data.out_validation)-(model_parameters.memory_order+3), :]
+
         return output, nmse
 
     def __calculate_x_matrix(self, mat_in, memory_order, polynomial_order):
@@ -95,6 +98,9 @@ class RealMatrix(CalculationStrategy):
             data.out_validation)-model_parameters.memory_order, :]
 
         nmse = NMSE(output, out_val_re).get_nmse()
+
+        self.original_in_validation = data.in_validation[0:len(data.out_validation)-model_parameters.memory_order, :]
+        self.original_out_validation = out_val_re
 
         return output, nmse
 
@@ -160,6 +166,10 @@ class LookUpTable(CalculationStrategy):
         out_val_lut = data.out_validation[model_parameters.memory_order:len(
             data.out_validation), :]
         nmse = NMSE(output, out_val_lut).get_nmse()
+        
+        self.original_in_validation = data.in_validation[model_parameters.memory_order:len(data.out_validation), :]
+        self.original_out_validation = out_val_lut
+        
 
         return output, nmse
 
@@ -245,7 +255,10 @@ class MemoryPolynomial:
         if evaluate:
             self.calculated_output, self.nmse = calculation_strategy.evaluate_model(
                 model_parameters, data)
+            self.real_input = self.calculation_strategy.original_in_validation
+            self.real_output = self.calculation_strategy.original_out_validation
 
     def evaluate(self):
         self.calculated_output, self.nmse = self.calculation_strategy.evaluate_model(
             self.model_parameters, self.data)
+        self.real_output = self.calculation_strategy.original_out_validation
